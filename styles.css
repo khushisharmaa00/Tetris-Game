@@ -17,3 +17,19 @@ body {
   background-color: white;
   box-shadow: 0 0 10px 0 lightgrey;
 }
+
+@keyframes scoreIncrease {
+  0% {
+    color: white;
+  }
+  50% {
+    color: yellow;
+  }
+  100% {
+    color: white;
+  }
+}
+
+#scoreboard {
+  animation: scoreIncrease 1s;
+}

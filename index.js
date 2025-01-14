@@ -1,3 +1,7 @@
+let canvas = document.querySelector("#tetris");
+let scoreboard = document.querySelector("#scoreboard");
+let ctx = canvas.getContext("2d");
+ctx.scale(30, 30);
 // constants
 const SHAPES = [
   [
@@ -51,11 +55,6 @@ const COLORS = [
 const ROWS = 20;
 const COLS = 10;
 
-let canvas = document.querySelector("#tetris");
-let scoreboard = document.querySelector("#scoreboard");
-let ctx = canvas.getContext("2d");
-ctx.scale(30, 30);
-
 let grid = generateGrid();
 let pieceObj = null;
 let score = 0;
@@ -95,6 +94,7 @@ function checkGrid() {
   } else if (count > 3) {
     score += 100;
   }
+  console.log("Score:", score);
   scoreboard.innerHTML = "Score: " + score;
 }
 
