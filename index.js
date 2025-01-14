@@ -19,7 +19,7 @@ const SHAPES = [
   ],
   [
     [1, 1, 0],
-    [0, 1, 0], //S
+    [0, 1, 1], //S
     [0, 0, 0],
   ],
   [
@@ -52,35 +52,25 @@ const ROWS = 20;
 const COLS = 10;
 
 let canvas = document.querySelector("#tetris");
-let scoreboard = document.querySelector("h2");
+let scoreboard = document.querySelector("#scoreboard");
 let ctx = canvas.getContext("2d");
 ctx.scale(30, 30);
-let pieceObj = null;
+
 let grid = generateGrid();
+let pieceObj = null;
 let score = 0;
 
-function generateRandom() {
-  let ran = Math.floor(Math.random() * 7);
-  //   console.log(SHAPES[ran]);
-  let piece = SHAPES[ran];
-  let colorIndex = ran + 1;
-  let x = 4;
-  let y = 0;
-  return { piece, x, y, colorIndex };
-}
 setInterval(newGameState, 500);
 
 function newGameState() {
   checkGrid();
   if (!pieceObj) {
     pieceObj = generateRandom();
-    // renderPiece();
+    renderPiece();
+  } else {
+    moveDown();
   }
-  moveDown();
 }
-// console.log(pieceObj);
-
-renderPiece();
 function checkGrid() {
   let count = 0;
   for (let i = 0; i < grid.length; i++) {
@@ -96,24 +86,46 @@ function checkGrid() {
       count++;
     }
   }
-  if (count == 1) {
+  if (count === 1) {
     score += 10;
-  } else if (count == 2) {
+  } else if (count === 2) {
     score += 30;
-  } else if (count == 3) {
+  } else if (count === 3) {
     score += 50;
   } else if (count > 3) {
     score += 100;
   }
-  scoreboard.innerHTML = "Score:" + score;
+  scoreboard.innerHTML = "Score: " + score;
 }
 
+function generateGrid() {
+  let grid = [];
+  for (let i = 0; i < ROWS; i++) {
+    grid.push([]);
+    for (let j = 0; j < COLS; j++) {
+      grid[i].push(0);
+    }
+  }
+  return grid;
+}
+function generateRandom() {
+  let ran = Math.floor(Math.random() * 7);
+  //   console.log(SHAPES[ran]);
+  let piece = SHAPES[ran];
+  let colorIndex = ran + 1;
+  let x = 4;
+  let y = 0;
+  return { piece, colorIndex, x, y };
+}
+
+// console.log(pieceObj);
+
 function renderPiece() {
-  if (!pieceObj) return;
+  if (!pieceObj) return; // Exit if there's no piece to render
   let piece = pieceObj.piece;
   for (let i = 0; i < piece.length; i++) {
     for (let j = 0; j < piece[i].length; j++) {
-      if (piece[i][j] == 1) {
+      if (piece[i][j] === 1) {
         ctx.fillStyle = COLORS[pieceObj.colorIndex];
         ctx.fillRect(pieceObj.x + j, pieceObj.y + i, 1, 1);
       }
@@ -122,12 +134,14 @@ function renderPiece() {
 }
 
 function moveDown() {
+  if (!pieceObj) return; // Exit if there's no active piece
   if (!collision(pieceObj.x, pieceObj.y + 1)) {
     pieceObj.y += 1;
   } else {
-    for (let i = 0; i < pieceObj.piece.length; i++) {
-      for (let j = 0; j < pieceObj.piece[i].length; j++) {
-        if (pieceObj.piece[i][j] === 1) {
+    let piece = pieceObj.piece;
+    for (let i = 0; i < piece.length; i++) {
+      for (let j = 0; j < piece[i].length; j++) {
+        if (piece[i][j] === 1) {
           let p = pieceObj.x + j;
           let q = pieceObj.y + i;
           grid[q][p] = pieceObj.colorIndex;
@@ -138,6 +152,7 @@ function moveDown() {
       alert("Game Over");
       grid = generateGrid();
       score = 0;
+      scoreboard.innerHTML = "Score: " + score;
     }
     pieceObj = null;
   }
@@ -146,7 +161,6 @@ function moveDown() {
 
 function moveLeft() {
   if (!collision(pieceObj.x - 1, pieceObj.y)) pieceObj.x -= 1;
-
   renderGrid();
 }
 
@@ -156,13 +170,22 @@ function moveRight() {
 }
 
 function rotate() {
-  let piece = pieceObj.piece;
   let rotatePiece = [];
-  for (let i = 0; i < piece[0].length; i++) {
+  let piece = pieceObj.piece;
+  for (let i = 0; i < piece.length; i++) {
     rotatePiece.push([]);
-    for (let j = 0; j < piece.length; j++) {
-      rotatePiece[i].push(piece[piece.length - 1 - j][i]);
+    for (let j = 0; j < piece[i].length; j++) {
+      rotatePiece[i].push(0);
     }
+  }
+  for (let i = 0; i < piece.length; i++) {
+    for (let j = 0; j < piece[i].length; j++) {
+      rotatePiece[i][j] = piece[j][i];
+    }
+  }
+
+  for (let i = 0; i < rotatePiece.length; i++) {
+    rotatePiece[i] = rotatePiece[i].reverse();
   }
   //transpose
 
@@ -172,11 +195,11 @@ function rotate() {
   renderGrid();
 }
 
-function collision(x, y, piece = pieceObj.piece) {
-  //   piece = rotatePiece || pieceObj.piece;
+function collision(x, y, rotatePiece) {
+  let piece = rotatePiece || pieceObj.piece;
   for (let i = 0; i < piece.length; i++) {
     for (let j = 0; j < piece[i].length; j++) {
-      if (piece[i][j] == 1) {
+      if (piece[i][j] === 1) {
         let p = x + j;
         let q = y + i;
         if (p >= 0 && p < COLS && q >= 0 && q < ROWS) {
@@ -192,17 +215,6 @@ function collision(x, y, piece = pieceObj.piece) {
   return false;
 }
 
-function generateGrid() {
-  let grid = [];
-  for (let i = 0; i < ROWS; i++) {
-    grid.push([]);
-    for (let j = 0; j < COLS; j++) {
-      grid[i].push(0);
-    }
-  }
-  return grid;
-}
-
 function renderGrid() {
   for (let i = 0; i < grid.length; i++) {
     for (let j = 0; j < grid[i].length; j++) {
@@ -210,7 +222,8 @@ function renderGrid() {
       ctx.fillRect(j, i, 1, 1);
     }
   }
-  renderPiece();
+  if (pieceObj) renderPiece(); // Render piece only if it exists
+  scoreboard.innerHTML = "Score: " + score;
 }
 
 document.addEventListener("keydown", function (e) {
@@ -219,11 +232,11 @@ document.addEventListener("keydown", function (e) {
 
   if (key == "ArrowDown") {
     moveDown();
-  } else if (key == "ArrowLeft") {
+  } else if (key === "ArrowLeft") {
     moveLeft();
-  } else if (key == "ArrowRight") {
+  } else if (key === "ArrowRight") {
     moveRight();
-  } else if (key == "ArrowUp") {
+  } else if (key === "ArrowUp") {
     rotate();
   }
 });
